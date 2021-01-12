@@ -1,13 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import { faBackward} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { GlobalContext } from "../context/GlobalState";
+
 
 function MovieDetails(props) {
   const [movie, setMovie] = useState([]);
   const { movieID } = useParams();
   const [query, setQuery] = useState();
   console.log(movie);
+
+  const {
+    addMovieToWatchlist,
+    addMovieToWatched,
+    watchlist,
+    watched,
+  } = useContext(GlobalContext);
+
+  let storedMovie = watchlist.find((o) => o.id === movie.id);
+  let storedMovieWatched = watched.find((o) => o.id === movie.id);
+
+  const watchlistDisabled = storedMovie
+    ? true
+    : storedMovieWatched
+    ? true
+    : false;
+
+  const watchedDisabled = storedMovieWatched ? true : false;
 
   useEffect(() => {
     const detailsURL = `https://api.themoviedb.org/3/movie/${movieID}?api_key=0ecede2e93db3d208afce55b40229dbf&language=en-US`;
@@ -42,9 +62,23 @@ function MovieDetails(props) {
               <h5 className="card-title">{movie.title}</h5>
               <p className="card-text">{movie.overview}</p>
               <p className="card-text">Movie Rate : {movie.vote_average}</p>
+
+              <div className="controls">
+                <button
+                  className="btn"
+                  disabled={watchlistDisabled}
+                  onClick={() => addMovieToWatchlist(movie)}
+                >
+                  Add to Watchlist
+                </button>
+              </div>
+
             </div>
           </div>
           <div />
+
+          
+
         </div>
 
         {/* <Link className='btn-float'>
