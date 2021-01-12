@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import {Link} from 'react-router-dom'
 import { GlobalContext } from "../context/GlobalState";
 
 export const ResultCard = ({ movie }) => {
@@ -50,13 +51,8 @@ export const ResultCard = ({ movie }) => {
             Add to Watchlist
           </button>
 
-          <button
-            className="btn"
-            disabled={watchedDisabled}
-            onClick={() => addMovieToWatched(movie)}
-          >
-            Add to Watched
-          </button>
+          <Link to={`/movie/${movie.id}`} className="btn btn-dark">Read More</Link>
+
         </div>
       </div>
     </div>

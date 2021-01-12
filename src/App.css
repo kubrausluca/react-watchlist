@@ -2,7 +2,7 @@
 
 :root {
   --primary: #032541;
-  --secondary: #21d07a;
+  --secondary: #B00020;
   --white: #fff;
 }
 
@@ -58,7 +58,7 @@ body {
 }
 
 .btn:hover {
-  background-color: #1aa762;
+  background-color: #B00020;
   opacity: 1;
   cursor: pointer;
 }
