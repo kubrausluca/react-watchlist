@@ -68,3 +68,31 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+**In scope for MVP-1:**
+
+- **A2A Server:** receives tasks from other agents. It returns the result directly (blocking) or as a stream (SSE).
+- **A2A Client:** sends tasks to the peer agents listed in the agent's configuration.
+- **Protocol bindings:** every A2A Server supports both the HTTP+JSON and JSON-RPC bindings, served by one shared request handler. The Agent Card lists HTTP+JSON first, so ARK AI clients use HTTP+JSON. Streaming uses SSE on both bindings.
+- **Binding equivalence:** both bindings apply the same authentication, authorization, Online ARK Security checks and error model.
+- **Agent Card publishing:** every A2A Server publishes its Agent Card at `/.well-known/agent-card.json`. The framework generates the card from the agent's configuration.
+- **Configuration-based discovery:** each agent lists its peers (a logical name and an endpoint) in its Git-based configuration. The A2A Client reads each peer's Agent Card from the peer's well-known address and caches it.
+- **Static Agent Card (exception only):** if a peer cannot publish a card, its card can be written in the caller's configuration.
+- **Peers as LLM tools:** the framework turns peer skills into tools. The agent's LLM decides when to call a peer. Mandatory steps can still be called directly from code.
+- **Access control at every agent:** caller identity check, an allowed-callers list, and Online ARK Security validation where required.
+- **Agent roles:** an agent can be client-only, server-only, or both.
+- **Network reach:** agents in the same or in different namespaces of the cluster.
+- **Observability:** tracing and standard metrics for every A2A call, labeled by binding.
+
+**Out of scope for MVP-1:**
+
+- A central Agent Catalog or Agent Registry, and central, dynamic or semantic discovery and routing.
+- A central A2A Gateway.
+- Background (asynchronous) tasks, push notifications and persistent task storage.
+- Tasks that pause for user input or extra authorization (`INPUT_REQUIRED`, `AUTH_REQUIRED`).
+- Agents outside the organization, and signed or extended Agent Cards.
+- The A2A gRPC binding.
+- Changes to the existing gRPC agent-as-tool integration.
+- Agent runtime internals, LLM implementation and model access.
+- The detailed design of future discovery and gateway capabilities.
