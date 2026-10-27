@@ -68,3 +68,52 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+
+A2A Protokolü için Agent'lara Yeni Port ve OpenShift Tanımları
+Bağlam
+AI Agent Framework'ümüze A2A (Agent2Agent) protokolü desteği ekliyoruz. A2A, ajanların birbirini standart bir şekilde çağırabilmesini sağlayan açık bir protokol: HTTP üzerinden JSON, uzun süren cevaplar için de SSE (Server-Sent Events) kullanıyor.
+Bugün bir agent açılırken `serviceType` olarak `grpc` ya da `rest` belirtilebiliyor. Bunlara `a2a` seçeneğini ekleyeceğiz. Bir agent'ın hem mevcut gRPC hem de A2A üzerinden erişilebilir olması gerekecek. Mevcut gRPC altyapısı aynen devam ediyor, A2A onun yanına ekleniyor.
+İlk fazda (MVP-1) A2A trafiği sadece cluster içinde olacak. Ajanlar birbirini aynı ya da farklı namespace'lerden Kubernetes servis adresiyle çağıracak, örneğin:
+```
+agentic-ai-poc-aiagent-v0.genai-common-dev.svc.cluster.local
+```
+Dışarıya açılım bu fazın kapsamında değil.
+Taleplerimiz
+Yeni port: `serviceType` değeri `a2a` olan agent'lar için Deployment ve Service tanımına ayrı, isimli bir port eklenmesi. Örneğin `name: a2a`, `port: 8081` (port numarası sizin standardınıza göre belirlenebilir). Agent hem gRPC hem A2A sunuyorsa iki port birlikte açılacak.
+Bu port üzerinden servis edilecek path'ler:
+Path	Amaç
+`GET /.well-known/agent-card.json`	Agent'ın kendini tanıttığı kart
+`/a2a/*`	A2A istekleri (HTTP+JSON ve JSON-RPC)
+Namespace'ler arası erişim: A2A portuna farklı namespace'lerdeki agent'lardan erişime izin veren NetworkPolicy tanımları.
+Uzun süreli bağlantılar: A2A cevapları SSE ile akış halinde gelebiliyor ve birkaç dakika sürebiliyor. Bu trafiğin router ya da proxy katmanında buffer'lanmaması ve zaman aşımının uzun tutulması gerekiyor (önerimiz en az 300 saniye).
+Health check: A2A portu hazır olmadan pod'un trafik almaması için readiness probe tanımı.
+Örnek Service tanımı
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-ai-poc-aiagent-v0
+  namespace: genai-common-dev
+spec:
+  selector:
+    app: agentic-ai-poc-aiagent-v0
+  ports:
+    - name: grpc          # mevcut
+      port: 50051
+      targetPort: 50051
+    - name: a2a           # yeni
+      port: 8081
+      targetPort: 8081
+      appProtocol: http
+```
+> Port numaraları örnektir; altyapı standardına göre belirlenecektir.
+Sizinle Netleştirmek İstediğimiz Konular
+[ ] A2A için kullanılacak standart port numarası ve isimlendirme kuralı ne olmalı?
+[ ] Cluster içi trafik için Route ya da host tanımı gerekiyor mu, yoksa servis adresi (`*.svc.cluster.local`) yeterli mi?
+[ ] İleride A2A'yı API Gateway arkasından ya da cluster dışına açmak istediğimizde host isimlendirme standardı ne olur? (Şu an talep etmiyoruz, ama agent kartına yazılacak adresi bu belirleyeceği için planlamak istiyoruz.)
+[ ] Namespace'ler arası trafikte mTLS ya da service mesh kullanılıyor mu?
+[ ] `serviceType: a2a` geldiğinde bu tanımların otomatik oluşturulması için Helm chart ya da template'te nasıl bir değişiklik gerekir?
+Sonraki Adım
+Uygun olduğunuz bir zamanda kısa bir toplantıda konuşabilirsek sevinirim.
